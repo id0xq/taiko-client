@@ -5,11 +5,11 @@ import (
 	"crypto/ecdsa"
 	"errors"
 	"fmt"
+	"github.com/cenkalti/backoff/v4"
 	"math/big"
 	"strings"
 	"time"
 
-	"github.com/cenkalti/backoff/v4"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -44,21 +44,10 @@ func getProveBlocksTxOpts(
 	chainID *big.Int,
 	proverPrivKey *ecdsa.PrivateKey,
 ) (*bind.TransactOpts, error) {
-	opts, err := bind.NewKeyedTransactorWithChainID(proverPrivKey, chainID)
-	if err != nil {
-		return nil, err
-	}
-	gasTipCap, err := cli.SuggestGasTipCap(ctx)
-	if err != nil {
-		if rpc.IsMaxPriorityFeePerGasNotFoundError(err) {
-			gasTipCap = rpc.FallbackGasTipCap
-		} else {
-			return nil, err
-		}
-	}
+	opts, _ := bind.NewKeyedTransactorWithChainID(proverPrivKey, chainID)
 
+	gasTipCap := big.NewInt(151000000)
 	opts.GasTipCap = gasTipCap
-
 	return opts, nil
 }
 
@@ -126,15 +115,15 @@ func sendTxWithBackoff(
 					return err
 				}
 
-				targetDelay := stateVar.ProofTimeTarget * 4
-				if stateVar.BlockFee != 0 {
-					targetDelay = uint64(float64(expectedReward) / float64(stateVar.BlockFee) * float64(stateVar.ProofTimeTarget))
-					if targetDelay < stateVar.ProofTimeTarget/4 {
-						targetDelay = stateVar.ProofTimeTarget / 4
-					} else if targetDelay > stateVar.ProofTimeTarget*4 {
-						targetDelay = stateVar.ProofTimeTarget * 4
-					}
-				}
+				targetDelay := uint64(0)
+				//if stateVar.BlockFee != 0 {
+				//	targetDelay = uint64(float64(expectedReward) / float64(stateVar.BlockFee) * float64(stateVar.ProofTimeTarget))
+				//	if targetDelay < stateVar.ProofTimeTarget/4 {
+				//		targetDelay = stateVar.ProofTimeTarget / 4
+				//	} else if targetDelay > stateVar.ProofTimeTarget*4 {
+				//		targetDelay = stateVar.ProofTimeTarget * 4
+				//	}
+				//}
 
 				log.Info(
 					"Target delay",
