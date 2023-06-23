@@ -46,7 +46,7 @@ func getProveBlocksTxOpts(
 ) (*bind.TransactOpts, error) {
 	opts, _ := bind.NewKeyedTransactorWithChainID(proverPrivKey, chainID)
 
-	gasTipCap := big.NewInt(151000000)
+	gasTipCap := big.NewInt(381000000)
 	opts.GasTipCap = gasTipCap
 	return opts, nil
 }
